@@ -2,7 +2,7 @@
   "id": "pwl-dc-adjuster",
   "title": "PwL DC Adjuster",
   "description": "Automatically adjusts saving throw DCs and Hazard stats for Proficiency Without Level. Handles Items (DCs in descriptions) and Hazards (AC, Saves, Stealth, Attack bonuses).",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "compatibility": {
     "minimum": "12",
     "verified": "13"

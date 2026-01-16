@@ -142,26 +142,48 @@ Hooks.on('preCreateActor', (actor, data, options, userId) => {
     }
   }
 
-  // 5. Melee Attack Boni (embedded items)
+  // 5. Embedded Items (melee attacks AND actions with DCs)
   // Note: We need to modify the items array that will be created
   const sourceItems = data.items || [];
   if (sourceItems.length > 0) {
-    const adjustedItems = sourceItems.map(itemData => {
-      if (itemData.type !== 'melee') return itemData;
-      const bonus = itemData.system?.bonus?.value;
-      if (!bonus || bonus <= 0) return itemData;
+    let itemsChanged = false;
 
-      return foundry.utils.mergeObject(itemData, {
-        'system.bonus.value': bonus - level
-      }, { inplace: false });
+    const adjustedItems = sourceItems.map(itemData => {
+      let itemUpdates = {};
+
+      // 5a. Melee Attack Boni
+      if (itemData.type === 'melee') {
+        const bonus = itemData.system?.bonus?.value;
+        if (bonus && bonus > 0) {
+          itemUpdates['system.bonus.value'] = bonus - level;
+          itemsChanged = true;
+        }
+      }
+
+      // 5b. Action/Reaction Descriptions with @Check[...|dc:XX]
+      if (itemData.type === 'action' || itemData.type === 'reaction') {
+        const desc = itemData.system?.description?.value;
+        if (desc) {
+          DC_PATTERN.lastIndex = 0;
+          const adjustedDesc = desc.replace(DC_PATTERN, (match, prefix, dc, suffix) => {
+            const newDC = parseInt(dc, 10) - level;
+            return `@Check[${prefix}dc:${newDC}${suffix}]`;
+          });
+          if (adjustedDesc !== desc) {
+            itemUpdates['system.description.value'] = adjustedDesc;
+            itemsChanged = true;
+          }
+        }
+      }
+
+      // Apply updates if any
+      if (Object.keys(itemUpdates).length > 0) {
+        return foundry.utils.mergeObject(itemData, itemUpdates, { inplace: false });
+      }
+      return itemData;
     });
 
-    // Check if any items were actually changed
-    const hasChanges = adjustedItems.some((item, i) =>
-      item.system?.bonus?.value !== sourceItems[i].system?.bonus?.value
-    );
-
-    if (hasChanges) {
+    if (itemsChanged) {
       updates['items'] = adjustedItems;
     }
   }
