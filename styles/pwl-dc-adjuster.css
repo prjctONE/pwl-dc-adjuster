@@ -1,0 +1,12 @@
+/**
+ * PwL DC Adjuster Styles
+ */
+
+/* Flatten DCs button in Items tab */
+.pwl-flatten-btn {
+  flex: 0 0 auto;
+}
+
+.pwl-flatten-btn i {
+  margin-right: 4px;
+}
